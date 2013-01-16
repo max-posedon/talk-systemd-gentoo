@@ -1,0 +1,140 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+
+
+\begin{document}
+
+\title{Systemd state in Gentoo}
+\author{Maksim 'max\_posedon' Melnikau}
+\institute{Linux Mobile hobbyist\\World of Tanks developer}
+\date{\today}
+\frame{\titlepage}
+
+\section{Give it a try}
+\frame{
+  \frametitle{Systemd}
+  \begin{itemize}
+  \item systemd-29 - classic
+  \item systemd-37 - separate /usr "is broken"
+  \item systemd-38 - journald
+  \end{itemize}
+}
+
+\frame{
+  \frametitle{systemd-overlay}
+  \begin{itemize}
+  \item bootchart2 - boot profiling
+  \item systemd-units - service files for different packages
+  \item baselayout-systemd - native layout
+  \end{itemize}
+}
+
+\frame{
+  \frametitle{QA}
+  \begin{itemize}
+  \item systemd-38
+  \item kmod-4
+  \item linux-3.2.1
+  \item udev-175
+  \item / - btrfs
+  \item /boot - ext4, comment=systemd.automount
+  \item /home - ext4, comment=systemd.automount
+  \item initrd - not used
+  \end{itemize}
+}
+
+\section{Ongoing work}
+\frame{
+    \frametitle{BUGS}
+    \begin{itemize}
+    \item sshd.socket - close session bug (FIXED)
+    \item kdm.service - too long stop (UNCONFIRMED)
+    \item rabbitmq-server.service - missing (FIXED)
+    \item memcached.service - missing (UNCONFIRMED)
+    \item procps - print cgroup bug (UNCONFIRMED)
+    \item kmod-4 udev - compatibility (FIXED)
+    \item screen cannot make /var/run/screen (CONFIRMED)
+    \end{itemize}
+}
+
+\begin{frame}[fragile]
+    \frametitle{tmpfiles.d support}
+    \begin{block}{x11.conf}
+    \begin{verbatim}
+# Make sure these are created by default
+# so that nobody else can
+d /tmp/.X11-unix 1777 root root 10d
+d /tmp/.ICE-unix 1777 root root 10d
+d /tmp/.XIM-unix 1777 root root 10d
+d /tmp/.font-unix 1777 root root 10d
+d /tmp/.Test-unix 1777 root root 10d
+
+# Unlink the X11 lock files
+r /tmp/.X\[0-9\]*-lock
+    \end{verbatim}
+    \end{block}
+\end{frame}
+
+\section{journald}
+\begin{frame}[fragile]
+    \frametitle{old fashion way}
+    \begin{block}{}
+    \begin{verbatim}
+**** scsi_host ADDING /sys/devices/pci0000:00/\
+0000:00:1c.5/0000:19:00.0/usb2/2-2/2-2:1.0/\
+host12/scsi_host/host12
+    \end{verbatim}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{journald: internal info}
+    \begin{block}{}
+    \begin{verbatim}
+.cursor=s=699ea133db00482fa4a7b5c657d46005;i=11a5;\
+b=e4ab800eb7da4341ba2636b175401cd4;m=cd3bbcc29;\
+t=4b7932409f4b4;x=2390aba9655d417f;p=system.journal
+.realtime=1327742499550388
+.monotonic=55091907625
+.boot_id=e4ab800eb7da4341ba2636b175401cd4
+    \end{verbatim}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{journald: the message itself}
+    \begin{block}{}
+    \begin{verbatim}
+PRIORITY=6
+SYSLOG_FACILITY=3
+SYSLOG_IDENTIFIER=dbus-daemon
+MESSAGE=**** scsi_host ADDING /sys/devices/pci0000:00/\
+0000:00:1c.5/0000:19:00.0/usb2/2-2/2-2:1.0/\
+host12/scsi_host/host12
+    \end{verbatim}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{journald: systemd info}
+    \begin{block}{}
+    \begin{verbatim}
+_TRANSPORT=stdout
+_PID=1525
+_UID=0
+_GID=0
+_COMM=dbus-daemon
+_EXE=/usr/bin/dbus-daemon
+_CMDLINE=/usr/bin/dbus-daemon --system\
+--address=systemd: --nofork --systemd-activation
+_SYSTEMD_CGROUP=/system/dbus.service
+_SYSTEMD_UNIT=dbus.service
+_BOOT_ID=e4ab800eb7da4341ba2636b175401cd4
+_MACHINE_ID=39c6b68fb43e36e755a804880000005f
+_HOSTNAME=m_melnikau-vaio
+    \end{verbatim}
+    \end{block}
+\end{frame}
+
+\end{document}
